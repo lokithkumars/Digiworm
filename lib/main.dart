@@ -4,6 +4,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'firebase_options.dart';
+import 'dashboard.dart';
 
 // Crop options in local languages
 final Map<String, List<String>> cropOptions = {
@@ -1244,20 +1245,35 @@ class _CropsInputPageState extends State<CropsInputPage> {
                         );
                         return;
                       }
-                      await _saveToFirebase();
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Success'),
-                          content: const Text('Your data has been saved!'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('OK'),
+                      try {
+                        await _saveToFirebase();
+                      } catch (e) {
+                        // Log the error or show a message, but proceed to the dashboard
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Firestore Error'),
+                            content: Text('Failed to save data: $e'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          ),
+                        );
+                      } finally {
+                        // Navigate to the dashboard regardless of success or failure
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DashboardPage(
+                              languageCode: widget.languageCode,
+                              farmerName: widget.name,
                             ),
-                          ],
-                        ),
-                      );
+                          ),
+                        );
+                      }
                     },
                     child: Text(
                       localizedStrings[widget.languageCode]!['submit']!,
