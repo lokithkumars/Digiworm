@@ -307,24 +307,6 @@ const Map<String, Map<String, String>> localizedStrings = {
     'enter_land_title': 'Enter Landholdings',
     'enter_crops_title': 'Enter Crops Grown',
   },
-  'kn': {
-    'select_language': 'ದಯವಿಟ್ಟು ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ:',
-    'name_prompt': 'ನಿಮ್ಮ ಹೆಸರು ಏನು?',
-    'name_label': 'ಹೆಸರು',
-    'phone_prompt': 'ನಿಮ್ಮ ಫೋನ್ ಸಂಖ್ಯೆ ಏನು?',
-    'phone_label': 'ಫೋನ್ ಸಂಖ್ಯೆ',
-    'land_prompt': 'ನಿಮ್ಮ ಭೂಮಿಯ ವಿವರಗಳು?',
-    'land_label': 'ಭೂಮಿಯ ವಿವರಗಳು',
-    'crops_prompt': 'ನೀವು ಯಾವ ಬೆಳೆಗಳನ್ನು ಬೆಳೆಸುತ್ತೀರಿ?',
-    'crops_label': 'ಬೆಳೆಗಳು',
-    'next': 'ಮುಂದೆ',
-    'submit': 'ಸಲ್ಲಿಸು',
-    'select_language_title': 'ಭಾಷೆ ಆಯ್ಕೆ',
-    'enter_name_title': 'ಹೆಸರು ನಮೂದಿಸಿ',
-    'enter_phone_title': 'ಫೋನ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ',
-    'enter_land_title': 'ಭೂಮಿಯ ವಿವರಗಳು ನಮೂದಿಸಿ',
-    'enter_crops_title': 'ಬೆಳೆಗಳು ನಮೂದಿಸಿ',
-  },
   'ta': {
     'select_language': 'தயவுசெய்து உங்கள் மொழியை தேர்ந்தெடுக்கவும்:',
     'name_prompt': 'உங்கள் பெயர் என்ன?',
@@ -342,6 +324,24 @@ const Map<String, Map<String, String>> localizedStrings = {
     'enter_phone_title': 'தொலைபேசி எண்ணை உள்ளிடவும்',
     'enter_land_title': 'நில விவரங்களை உள்ளிடவும்',
     'enter_crops_title': 'பயிர்களை உள்ளிடவும்',
+  },
+  'kn': {
+    'select_language': 'ದಯವಿಟ್ಟು ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ:',
+    'name_prompt': 'ನಿಮ್ಮ ಹೆಸರು ಏನು?',
+    'name_label': 'ಹೆಸರು',
+    'phone_prompt': 'ನಿಮ್ಮ ಫೋನ್ ಸಂಖ್ಯೆ ಏನು?',
+    'phone_label': 'ಫೋನ್ ಸಂಖ್ಯೆ',
+    'land_prompt': 'ನಿಮ್ಮ ಭೂಮಿಯ ವಿವರಗಳು?',
+    'land_label': 'ಭೂಮಿಯ ವಿವರಗಳು',
+    'crops_prompt': 'ನೀವು ಯಾವ ಬೆಳೆಗಳನ್ನು ಬೆಳೆಸುತ್ತೀರಿ?',
+    'crops_label': 'ಬೆಳೆಗಳು',
+    'next': 'ಮುಂದೆ',
+    'submit': 'ಸಲ್ಲಿಸು',
+    'select_language_title': 'ಭಾಷೆ ಆಯ್ಕೆ',
+    'enter_name_title': 'ಹೆಸರು ನಮೂದಿಸಿ',
+    'enter_phone_title': 'ಫೋನ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ',
+    'enter_land_title': 'ಭೂಮಿಯ ವಿವರಗಳು ನಮೂದಿಸಿ',
+    'enter_crops_title': 'ಬೆಳೆಗಳು ನಮೂದಿಸಿ',
   },
   'te': {
     'select_language': 'దయచేసి మీ భాషను ఎంచుకోండి:',
@@ -489,14 +489,12 @@ class NameInputPage extends StatefulWidget {
 class _NameInputPageState extends State<NameInputPage> {
   final TextEditingController _controller = TextEditingController();
   late FlutterTts _tts;
-  late stt.SpeechToText _speech;
   bool _isListening = false;
 
   @override
   void initState() {
     super.initState();
     _tts = FlutterTts();
-    _speech = stt.SpeechToText();
     _speakPrompt();
   }
 
@@ -507,10 +505,10 @@ class _NameInputPageState extends State<NameInputPage> {
 
   Future<void> _listen() async {
     if (!_isListening) {
-      bool available = await _speech.initialize();
+      bool available = await stt.SpeechToText().initialize();
       if (available) {
         setState(() => _isListening = true);
-        _speech.listen(
+        stt.SpeechToText().listen(
           localeId: widget.languageCode,
           onResult: (result) {
             setState(() {
@@ -521,7 +519,7 @@ class _NameInputPageState extends State<NameInputPage> {
       }
     } else {
       setState(() => _isListening = false);
-      _speech.stop();
+      stt.SpeechToText().stop();
     }
   }
 
@@ -657,14 +655,12 @@ class PhoneInputPage extends StatefulWidget {
 class _PhoneInputPageState extends State<PhoneInputPage> {
   final TextEditingController _controller = TextEditingController();
   late FlutterTts _tts;
-  late stt.SpeechToText _speech;
   bool _isListening = false;
 
   @override
   void initState() {
     super.initState();
     _tts = FlutterTts();
-    _speech = stt.SpeechToText();
     _speakPrompt();
   }
 
@@ -675,10 +671,10 @@ class _PhoneInputPageState extends State<PhoneInputPage> {
 
   Future<void> _listen() async {
     if (!_isListening) {
-      bool available = await _speech.initialize();
+      bool available = await stt.SpeechToText().initialize();
       if (available) {
         setState(() => _isListening = true);
-        _speech.listen(
+        stt.SpeechToText().listen(
           localeId: widget.languageCode,
           onResult: (result) {
             setState(() {
@@ -689,7 +685,7 @@ class _PhoneInputPageState extends State<PhoneInputPage> {
       }
     } else {
       setState(() => _isListening = false);
-      _speech.stop();
+      stt.SpeechToText().stop();
     }
   }
 
@@ -831,7 +827,6 @@ class LandholdingsInputPage extends StatefulWidget {
 
 class _LandholdingsInputPageState extends State<LandholdingsInputPage> {
   late FlutterTts _tts;
-  late stt.SpeechToText _speech;
   int? _selectedAcres;
   final List<int> _acresOptions = [1, 2, 3, 4, 5, 10, 20, 50];
 
@@ -839,7 +834,6 @@ class _LandholdingsInputPageState extends State<LandholdingsInputPage> {
   void initState() {
     super.initState();
     _tts = FlutterTts();
-    _speech = stt.SpeechToText();
     _speakPrompt();
   }
 
@@ -991,7 +985,6 @@ class CropsInputPage extends StatefulWidget {
 
 class _CropsInputPageState extends State<CropsInputPage> {
   late FlutterTts _tts;
-  late stt.SpeechToText _speech;
   List<String> _selectedCrops = [];
   String? _otherCrop;
   bool _isListening = false;
@@ -1000,16 +993,15 @@ class _CropsInputPageState extends State<CropsInputPage> {
   void initState() {
     super.initState();
     _tts = FlutterTts();
-    _speech = stt.SpeechToText();
     _speakPrompt();
   }
 
   Future<void> _listenForCrops() async {
     if (!_isListening) {
-      bool available = await _speech.initialize();
+      bool available = await stt.SpeechToText().initialize();
       if (available) {
         setState(() => _isListening = true);
-        await _speech.listen(
+        await stt.SpeechToText().listen(
           localeId: widget.languageCode,
           onResult: (result) {
             setState(() => _isListening = false);
@@ -1050,7 +1042,7 @@ class _CropsInputPageState extends State<CropsInputPage> {
       }
     } else {
       setState(() => _isListening = false);
-      _speech.stop();
+      stt.SpeechToText().stop();
     }
   }
 

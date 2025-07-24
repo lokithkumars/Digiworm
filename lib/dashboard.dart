@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:geolocator/geolocator.dart';
+import 'weather.dart';
 
 // Add these localized strings for dashboard
 const Map<String, Map<String, String>> dashboardStrings = {
@@ -79,7 +80,7 @@ const Map<String, Map<String, String>> dashboardStrings = {
 class DashboardPage extends StatefulWidget {
   final String languageCode;
   final String farmerName;
-  
+
   const DashboardPage({
     super.key,
     required this.languageCode,
@@ -92,15 +93,49 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   final TextEditingController _queryController = TextEditingController();
-  late FlutterTts _tts;
   late stt.SpeechToText _speech;
   bool _isListening = false;
+  Position? _position; // Add this line
 
   @override
   void initState() {
     super.initState();
-    _tts = FlutterTts();
     _speech = stt.SpeechToText();
+    _requestLocationPermission();
+  }
+
+  Future<void> _requestLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Check if location services are enabled
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return;
+    }
+
+    // Check for location permissions
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    // Get the current position
+    try {
+      Position position = await Geolocator.getCurrentPosition();
+      setState(() {
+        _position = position; // Store the position
+      });
+    } catch (e) {
+      // Handle error if needed
+    }
   }
 
   Future<void> _listen() async {
@@ -126,38 +161,25 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildDashboardCard({
     required String title,
     required String description,
-    required IconData icon,
-    required Color color,
+    required Color color, // Changed to use color instead of image
     required VoidCallback onTap,
   }) {
     return Card(
       elevation: 8,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            gradient: LinearGradient(
-              colors: [color.withOpacity(0.7), color.withOpacity(0.9)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: color, // Set the background color
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  icon,
-                  size: 48,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 12),
                 Text(
                   title,
                   style: const TextStyle(
@@ -170,10 +192,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 const SizedBox(height: 8),
                 Text(
                   description,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.white70,
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Colors.white70),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -203,7 +222,9 @@ class _DashboardPageState extends State<DashboardPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Query Received'),
-        content: Text('Your question: "${_queryController.text}" has been received. Our AI will respond soon.'),
+        content: Text(
+          'Your question: "${_queryController.text}" has been received. Our AI will respond soon.',
+        ),
         actions: [
           TextButton(
             onPressed: () {
@@ -219,8 +240,9 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    final strings = dashboardStrings[widget.languageCode] ?? dashboardStrings['en']!;
-    
+    final strings =
+        dashboardStrings[widget.languageCode] ?? dashboardStrings['en']!;
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -251,6 +273,8 @@ class _DashboardPageState extends State<DashboardPage> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
+              const SizedBox(height: 16),
+
               // Dashboard Cards Grid
               GridView.count(
                 shrinkWrap: true,
@@ -263,56 +287,70 @@ class _DashboardPageState extends State<DashboardPage> {
                   _buildDashboardCard(
                     title: strings['weather']!,
                     description: strings['weather_desc']!,
-                    icon: Icons.wb_sunny,
-                    color: Colors.orange,
+                    color: Colors.blue, // Solid color for weather
                     onTap: () {
-                      // Navigate to weather page
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${strings['weather']!} feature coming soon!')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => WeatherPage(
+                            languageCode: widget.languageCode,
+                            currentPosition:
+                                _position, // Pass the position you got in dashboard
+                          ),
+                        ),
                       );
                     },
                   ),
                   _buildDashboardCard(
                     title: strings['crop_disease']!,
                     description: strings['disease_desc']!,
-                    icon: Icons.bug_report,
-                    color: Colors.red,
+                    color: Colors.red, // Solid color for crop disease
                     onTap: () {
                       // Navigate to crop disease page
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${strings['crop_disease']!} feature coming soon!')),
+                        SnackBar(
+                          content: Text(
+                            '${strings['crop_disease']!} feature coming soon!',
+                          ),
+                        ),
                       );
                     },
                   ),
                   _buildDashboardCard(
                     title: strings['market_details']!,
                     description: strings['market_desc']!,
-                    icon: Icons.trending_up,
-                    color: Colors.blue,
+                    color: Colors.amber, // Solid color for market details
                     onTap: () {
                       // Navigate to market details page
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${strings['market_details']!} feature coming soon!')),
+                        SnackBar(
+                          content: Text(
+                            '${strings['market_details']!} feature coming soon!',
+                          ),
+                        ),
                       );
                     },
                   ),
                   _buildDashboardCard(
                     title: strings['govt_schemes']!,
                     description: strings['schemes_desc']!,
-                    icon: Icons.account_balance,
-                    color: Colors.purple,
+                    color: Colors.green, // Solid color for government schemes
                     onTap: () {
                       // Navigate to government schemes page
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('${strings['govt_schemes']!} feature coming soon!')),
+                        SnackBar(
+                          content: Text(
+                            '${strings['govt_schemes']!} feature coming soon!',
+                          ),
+                        ),
                       );
                     },
                   ),
                 ],
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Query Section
               Card(
                 elevation: 8,
@@ -367,7 +405,9 @@ class _DashboardPageState extends State<DashboardPage> {
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                               ),
                               icon: const Icon(Icons.send),
                               label: Text(
@@ -380,7 +420,9 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(width: 12),
                           Container(
                             decoration: BoxDecoration(
-                              color: _isListening ? Colors.red[400] : Colors.green[400],
+                              color: _isListening
+                                  ? Colors.red[400]
+                                  : Colors.green[400],
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
@@ -399,7 +441,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 20),
             ],
           ),
