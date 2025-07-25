@@ -489,12 +489,14 @@ class NameInputPage extends StatefulWidget {
 class _NameInputPageState extends State<NameInputPage> {
   final TextEditingController _controller = TextEditingController();
   late FlutterTts _tts;
+  late stt.SpeechToText _speechToText;
   bool _isListening = false;
 
   @override
   void initState() {
     super.initState();
     _tts = FlutterTts();
+    _speechToText = stt.SpeechToText();
     _speakPrompt();
   }
 
@@ -505,10 +507,10 @@ class _NameInputPageState extends State<NameInputPage> {
 
   Future<void> _listen() async {
     if (!_isListening) {
-      bool available = await stt.SpeechToText().initialize();
+      bool available = await _speechToText.initialize();
       if (available) {
         setState(() => _isListening = true);
-        stt.SpeechToText().listen(
+        _speechToText.listen(
           localeId: widget.languageCode,
           onResult: (result) {
             setState(() {
@@ -519,7 +521,7 @@ class _NameInputPageState extends State<NameInputPage> {
       }
     } else {
       setState(() => _isListening = false);
-      stt.SpeechToText().stop();
+      _speechToText.stop();
     }
   }
 
