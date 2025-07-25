@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:math';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 
 // --- Models ---
@@ -85,6 +86,7 @@ enum LoadingState { idle, loading, refreshing, error }
 class MarketApiService {
   late final Dio _dio;
   final Logger _logger = Logger();
+  late final EnhancedGeminiAI _geminiAI;
 
   MarketApiService() {
     _dio = Dio(
@@ -94,6 +96,11 @@ class MarketApiService {
         headers: {'Content-Type': 'application/json'},
       ),
     );
+    String apiKey = kIsWeb
+        ? 'AIzaSyAdKbM43WXMXcrBuKxoLyGMmOaNUT7CdVo'
+        : dotenv.env['GEMINI_API_KEY'] ??
+              'AIzaSyAdKbM43WXMXcrBuKxoLyGMmOaNUT7CdVo';
+    _geminiAI = EnhancedGeminiAI(apiKey: apiKey);
   }
 
   // Using India's Department of Agriculture & Cooperation API
@@ -102,42 +109,33 @@ class MarketApiService {
     required List<String> crops,
   }) async {
     try {
-      // Government of India API for market prices
       const String govApiUrl =
           'https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070';
-
       final response = await _dio.get(
         govApiUrl,
         queryParameters: {
-          'api-key':
-              '579b464db66ec23bdd000001cd6ffaa79fa942d7793a09869d40e392', // Replace with actual key
+          'api-key': '579b464db66ec23bdd000001cd6ffaa79fa942d7793a09869d40e392',
           'format': 'json',
-          'limit': 100,
+          'limit': 1000,
         },
       );
 
-      if (response.statusCode == 200) {
-        final data = response.data;
-        List<CropPrice> cropPrices = [];
-
-        if (data['records'] != null) {
-          for (var record in data['records']) {
-            // Filter by user's crops and location proximity
-            String cropName = record['commodity']?.toString() ?? '';
-            if (_isCropMatch(cropName, crops)) {
-              cropPrices.add(CropPrice.fromGovernmentData(record));
-            }
-          }
+      if (response.statusCode == 200 && response.data != null) {
+        final processedPrices = await _geminiAI.processMarketDataWithGemini(
+          apiData: response.data,
+          userCrops: crops,
+          position: position,
+        );
+        if (processedPrices.isNotEmpty) {
+          _logger.i("Successfully processed market data with Gemini.");
+          return processedPrices;
+        } else {
+          _logger.w("Gemini returned no prices. Falling back.");
         }
-
-        return cropPrices.isNotEmpty
-            ? cropPrices
-            : _getFallbackCropPrices(crops);
       }
     } catch (e) {
-      _logger.e('Government API error: $e');
+      _logger.e('Government API or Gemini processing error: $e');
     }
-
     return _getFallbackCropPrices(crops);
   }
 
@@ -309,11 +307,45 @@ class EnhancedGeminiAI {
     _dio = Dio(
       BaseOptions(
         baseUrl: 'https://generativelanguage.googleapis.com',
-        connectTimeout: const Duration(seconds: 30),
-        receiveTimeout: const Duration(seconds: 30),
-        headers: {'Content-Type': 'application/json', 'x-goog-api-key': apiKey},
+        connectTimeout: const Duration(seconds: 60),
+        receiveTimeout: const Duration(seconds: 60),
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey, // This is correct
+        },
       ),
     );
+  }
+
+  Future<List<CropPrice>> processMarketDataWithGemini({
+    required Map<String, dynamic> apiData,
+    required List<String> userCrops,
+    required Position position,
+  }) async {
+    _logger.i("Attempting to process market data with Gemini...");
+    try {
+      String prompt = _buildProcessingPrompt(apiData, userCrops, position);
+      // We are expecting Gemini to return a JSON string
+      final response = await _generateContent(prompt, expectJson: true);
+
+      if (response != null && response.isNotEmpty) {
+        // Clean the response to ensure it's valid JSON
+        String cleanedResponse = response
+            .trim()
+            .replaceAll('```json', '')
+            .replaceAll('```', '');
+        final List<dynamic> processedData = json.decode(cleanedResponse);
+        _logger.i(
+          "✅ Successfully parsed ${processedData.length} crop prices from Gemini.",
+        );
+        return processedData
+            .map((data) => CropPrice.fromGovernmentData(data))
+            .toList();
+      }
+    } catch (e) {
+      _logger.e('❌ Gemini market data processing failed: $e');
+    }
+    return [];
   }
 
   Future<Map<String, String>> getMarketInsights({
@@ -322,6 +354,7 @@ class EnhancedGeminiAI {
     required String languageCode,
     required Position position,
   }) async {
+    _logger.i("Fetching high-level market insights from Gemini...");
     try {
       String prompt = _buildInsightPrompt(
         cropPrices,
@@ -329,9 +362,30 @@ class EnhancedGeminiAI {
         languageCode,
         position,
       );
+      // For insights, we just need a plain text response
+      final response = await _generateContent(prompt, expectJson: false);
 
+      if (response != null) {
+        _logger.i("✅ Successfully received market insights.");
+        return {'summary': response};
+      }
+    } catch (e) {
+      _logger.e('❌ Gemini insight generation failed: $e');
+    }
+    return {'summary': 'Could not fetch AI insights. Please check the logs.'};
+  }
+
+  // **FINAL CORRECTED VERSION of _generateContent**
+  Future<String?> _generateContent(
+    String prompt, {
+    bool expectJson = true,
+  }) async {
+    // **FIX:** Using the v1beta endpoint and a stable model name.
+    const String url = '/v1beta/models/gemini-1.5-flash-latest:generateContent';
+
+    try {
       final response = await _dio.post(
-        '/v1/models/gemini-pro:generateContent',
+        url,
         data: {
           'contents': [
             {
@@ -341,28 +395,52 @@ class EnhancedGeminiAI {
             },
           ],
           'generationConfig': {
-            'temperature': 0.7,
-            'maxOutputTokens': 1000,
-            'topP': 1,
-            'topK': 40,
+            'temperature': 0.2,
+            'maxOutputTokens': 2048,
+            // This parameter is VALID for the v1beta endpoint.
+            if (expectJson) 'response_mime_type': 'application/json',
           },
         },
       );
-
       if (response.statusCode == 200) {
-        String content =
-            response
-                .data['candidates']?[0]?['content']?['parts']?[0]?['text'] ??
-            '';
-        return _parseInsightResponse(content);
+        return response
+            .data['candidates']?[0]?['content']?['parts']?[0]?['text'];
       }
+    } on DioException catch (e) {
+      _logger.e(
+        'API Call Failed. Status: ${e.response?.statusCode}, Body: ${e.response?.data}',
+      );
     } catch (e) {
-      _logger.e('Gemini API error: $e');
+      _logger.e('An unexpected error occurred in _generateContent: $e');
     }
-
-    return _getFallbackInsights(cropPrices, languageCode);
+    return null;
   }
 
+  // This prompt is refined slightly for better clarity.
+  String _buildProcessingPrompt(
+    Map<String, dynamic> data,
+    List<String> crops,
+    Position position,
+  ) {
+    // Ensure you are passing the list of records correctly.
+    final records = data['records'] ?? [];
+    final jsonDataString = json.encode(records);
+    return '''
+    Analyze the following JSON market data from an Indian government API.
+    The crops I care about are: ${crops.join(', ')}.
+
+    Action: From the provided JSON data, filter the records to find entries that match my crops.
+    Output Rules:
+    1.  Return ONLY a valid JSON array of objects.
+    2.  Do not include any explanatory text, markdown like \`\`\`json, or anything else outside the JSON array.
+    3.  Each object in the array must have these exact keys: "commodity", "modal_price".
+
+    JSON Data:
+    $jsonDataString
+    ''';
+  }
+
+  // This prompt for user-friendly advice is also unchanged.
   String _buildInsightPrompt(
     List<CropPrice> crops,
     List<MandiInfo> mandis,
@@ -397,52 +475,6 @@ class EnhancedGeminiAI {
     prompt.writeln('4. Recommended selling strategy');
 
     return prompt.toString();
-  }
-
-  Map<String, String> _parseInsightResponse(String response) {
-    // Parse the AI response and extract structured insights
-    return {
-      'summary': 'Market conditions are favorable for most crops.',
-      'bestCrops': 'Cotton and Soybean showing strong demand.',
-      'predictions': 'Prices expected to remain stable next week.',
-      'strategy': 'Sell premium quality crops in morning hours.',
-    };
-  }
-
-  Map<String, String> _getFallbackInsights(
-    List<CropPrice> crops,
-    String languageCode,
-  ) {
-    // Generate basic insights based on crop data
-    int risingCount = crops.where((c) => c.trend == 'Rising').length;
-    int fallingCount = crops.where((c) => c.trend == 'Falling').length;
-
-    Map<String, Map<String, String>> insights = {
-      'en': {
-        'summary':
-            'Out of ${crops.length} crops, $risingCount showing rising trends.',
-        'bestCrops': crops
-            .where((c) => c.trend == 'Rising')
-            .map((c) => c.cropName)
-            .join(', '),
-        'predictions':
-            'Market expected to remain ${risingCount > fallingCount ? "positive" : "cautious"}.',
-        'strategy': 'Focus on quality and timing for better prices.',
-      },
-      'hi': {
-        'summary':
-            '${crops.length} फसलों में से $risingCount में बढ़ती प्रवृत्ति दिख रही है।',
-        'bestCrops': crops
-            .where((c) => c.trend == 'Rising')
-            .map((c) => c.cropName)
-            .join(', '),
-        'predictions':
-            'बाजार ${risingCount > fallingCount ? "सकारात्मक" : "सतर्क"} रहने की उम्मीद है।',
-        'strategy': 'बेहतर कीमतों के लिए गुणवत्ता और समय पर ध्यान दें।',
-      },
-    };
-
-    return insights[languageCode] ?? insights['en']!;
   }
 
   String _getLanguageName(String code) {
@@ -712,6 +744,8 @@ class _EnhancedMarketDetailsPageState extends State<EnhancedMarketDetailsPage> {
   Widget _buildAIInsightsCard() {
     return Card(
       elevation: 4,
+      margin: const EdgeInsets.all(12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -719,41 +753,27 @@ class _EnhancedMarketDetailsPageState extends State<EnhancedMarketDetailsPage> {
           children: [
             Row(
               children: [
-                Icon(Icons.psychology, color: Colors.purple[600]),
-                const SizedBox(width: 8),
+                Icon(Icons.psychology_alt, color: Colors.purple.shade700),
+                const SizedBox(width: 10),
                 Text(
-                  'AI Market Insights',
+                  'AI Market Analysis',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.purple[700],
+                    color: Colors.purple.shade800,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            if (_aiInsights['summary'] != null) ...[
-              Text(
-                'Summary:',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(_aiInsights['summary']!),
-              const SizedBox(height: 8),
-            ],
-            if (_aiInsights['bestCrops'] != null) ...[
-              Text(
-                'Best Crops to Sell:',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(_aiInsights['bestCrops']!),
-              const SizedBox(height: 8),
-            ],
-            if (_aiInsights['strategy'] != null) ...[
-              Text(
-                'Recommended Strategy:',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(_aiInsights['strategy']!),
-            ],
+            const Divider(height: 24, thickness: 1),
+            _loadingState == LoadingState.loading
+                ? const Center(child: CircularProgressIndicator())
+                : Text(
+                    _aiInsights['summary'] ??
+                        'No analysis available. Please try again later.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                  ),
           ],
         ),
       ),
