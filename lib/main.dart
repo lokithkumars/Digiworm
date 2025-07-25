@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'firebase_options.dart';
+// Firebase removed: import 'package:firebase_core/firebase_core.dart';
+// Firebase removed: import 'firebase_options.dart';
+// Firebase removed: import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dashboard.dart';
 
 // Crop options in local languages
@@ -154,7 +154,7 @@ final Map<String, List<String>> cropOptions = {
     'ಚಹಾ',
     'ರಬ್ಬರ್',
     'ಸೂರ್ಯಕಾಂತಿ',
-    'ನೆಲಗಡಲೆ',
+    'ನಿಲಕ್ಕಟಲೆ',
     'ಸೊಯಾಬೀನ್',
     'ಎಳ್ಳು',
     'ಸಾಸಿವೆ',
@@ -244,7 +244,7 @@ final Map<String, List<String>> cropOptions = {
     'జామ',
     'నారింజ',
     'నిమ్మ',
-    'ద్రాక్ష',
+    'ద్రాక್ష',
     'ఆపిల్',
     'దానిమ్మ',
     'పుచ్చకాయ',
@@ -256,7 +256,7 @@ final Map<String, List<String>> cropOptions = {
     'పుగాకు',
     'కాఫీ',
     'టీ',
-    'రబ్బరు',
+    'రబ್బరు',
     'సూర్యకాంతి',
     'పల్లీలు',
     'సోయాబీన్',
@@ -373,7 +373,7 @@ const Map<String, String> ttsLocales = {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // Firebase removed: await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const DigiwormApp());
 }
 
@@ -1051,27 +1051,28 @@ class _CropsInputPageState extends State<CropsInputPage> {
     await _tts.speak(localizedStrings[widget.languageCode]!['crops_prompt']!);
   }
 
-  Future<void> _saveToFirebase() async {
-    String cropsValue;
-    if (_selectedCrops.contains(cropOptions[widget.languageCode]!.last)) {
-      cropsValue =
-          (_selectedCrops..remove(cropOptions[widget.languageCode]!.last)).join(
-            ', ',
-          );
-      if (_otherCrop != null && _otherCrop!.trim().isNotEmpty) {
-        cropsValue += ', Other: ${_otherCrop!.trim()}';
-      }
-    } else {
-      cropsValue = _selectedCrops.join(', ');
-    }
-    await FirebaseFirestore.instance.collection('farmers').add({
-      'name': widget.name,
-      'phone': widget.phone,
-      'landholdings': widget.land,
-      'crops': cropsValue,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-  }
+  // Firebase removed: _saveToFirebase and Firestore usage
+  // Future<void> _saveToFirebase() async {
+  //   String cropsValue;
+  //   if (_selectedCrops.contains(cropOptions[widget.languageCode]!.last)) {
+  //     cropsValue =
+  //         (_selectedCrops..remove(cropOptions[widget.languageCode]!.last)).join(
+  //           ', ',
+  //         );
+  //     if (_otherCrop != null && _otherCrop!.trim().isNotEmpty) {
+  //       cropsValue += ', Other: ${_otherCrop!.trim()}';
+  //     }
+  //   } else {
+  //     cropsValue = _selectedCrops.join(', ');
+  //   }
+  //   await FirebaseFirestore.instance.collection('farmers').add({
+  //     'name': widget.name,
+  //     'phone': widget.phone,
+  //     'landholdings': widget.land,
+  //     'crops': cropsValue,
+  //     'timestamp': FieldValue.serverTimestamp(),
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -1237,35 +1238,18 @@ class _CropsInputPageState extends State<CropsInputPage> {
                         );
                         return;
                       }
-                      try {
-                        await _saveToFirebase();
-                      } catch (e) {
-                        // Log the error or show a message, but proceed to the dashboard
-                        showDialog(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Firestore Error'),
-                            content: Text('Failed to save data: $e'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('OK'),
-                              ),
-                            ],
+                      // Firebase removed: try { await _saveToFirebase(); } catch (e) { ... }
+                      // Firebase removed: finally { ... }
+                      // Navigate to the dashboard regardless of success or failure
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DashboardPage(
+                            languageCode: widget.languageCode,
+                            farmerName: widget.name,
                           ),
-                        );
-                      } finally {
-                        // Navigate to the dashboard regardless of success or failure
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DashboardPage(
-                              languageCode: widget.languageCode,
-                              farmerName: widget.name,
-                            ),
-                          ),
-                        );
-                      }
+                        ),
+                      );
                     },
                     child: Text(
                       localizedStrings[widget.languageCode]!['submit']!,

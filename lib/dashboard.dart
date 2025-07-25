@@ -292,10 +292,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => WeatherPage(
+                          builder: (context) => EnhancedWeatherPage(
                             languageCode: widget.languageCode,
-                            currentPosition:
-                                _position, // Pass the position you got in dashboard
+                            currentPosition: _position,
                           ),
                         ),
                       );
