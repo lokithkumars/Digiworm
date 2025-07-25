@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:geolocator/geolocator.dart';
 import 'weather.dart';
+import 'market.dart';
 
 // Add these localized strings for dashboard
 const Map<String, Map<String, String>> dashboardStrings = {
@@ -321,11 +322,19 @@ class _DashboardPageState extends State<DashboardPage> {
                     description: strings['market_desc']!,
                     color: Colors.amber, // Solid color for market details
                     onTap: () {
-                      // Navigate to market details page
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${strings['market_details']!} feature coming soon!',
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EnhancedMarketDetailsPage(
+                            languageCode: widget.languageCode,
+                            currentPosition: _position,
+                            userCrops: const [
+                              'Rice',
+                              'Wheat',
+                              'Maize',
+                              'Cotton',
+                              'Sugarcane',
+                            ], // Add your default crops here
                           ),
                         ),
                       );

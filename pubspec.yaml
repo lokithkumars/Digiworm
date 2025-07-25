@@ -37,6 +37,9 @@ dependencies:
   intl: ^0.18.1         # Add this for date formatting
   firebase_core: ^3.15.2
   cloud_firestore: ^5.6.12
+  dio: ^5.4.0          # HTTP client for API calls
+  logger: ^2.0.2+1     # Logging utility
+  flutter_dotenv: ^5.1.0  # Environment variables
 
 dev_dependencies:
   flutter_test:
