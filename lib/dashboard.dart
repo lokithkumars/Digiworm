@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'market.dart';
 import 'scheme_page.dart';
 import 'weather.dart';
+import 'Screens/disease_prediction_screen.dart';
 
 // Add these localized strings for dashboard
 const Map<String, Map<String, String>> dashboardStrings = {
@@ -320,12 +321,10 @@ class _DashboardPageState extends State<DashboardPage> {
                     description: strings['disease_desc']!,
                     imagePath: 'assets/images/crop_disease.jpg',
                     onTap: () {
-                      // Navigate to crop disease page
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${strings['crop_disease']!} feature coming soon!',
-                          ),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DiseasePredictionScreen(),
                         ),
                       );
                     },
