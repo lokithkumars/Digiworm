@@ -3,6 +3,7 @@ import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:geolocator/geolocator.dart';
 import 'weather.dart';
 import 'market.dart';
+import 'scheme_page.dart';
 
 // Add these localized strings for dashboard
 const Map<String, Map<String, String>> dashboardStrings = {
@@ -358,11 +359,11 @@ class _DashboardPageState extends State<DashboardPage> {
                     description: strings['schemes_desc']!,
                     imagePath: 'assets/images/govt_scheme.png',
                     onTap: () {
-                      // Navigate to government schemes page
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            '${strings['govt_schemes']!} feature coming soon!',
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SchemeDashboard(
+                            languageCode: widget.languageCode,
                           ),
                         ),
                       );
