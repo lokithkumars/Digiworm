@@ -349,24 +349,25 @@ class EnhancedGeminiAI {
   }
 
   Future<Map<String, String>> getMarketInsights({
-    required List<CropPrice> cropPrices,
-    required List<MandiInfo> mandis,
+    // Make these optional as they are not needed for the weather prompt
+    List<CropPrice>? cropPrices,
+    List<MandiInfo>? mandis,
     required String languageCode,
     required Position position,
+    // Add an optional custom prompt
+    String? customPrompt,
   }) async {
-    _logger.i("Fetching high-level market insights from Gemini...");
+    _logger.i("Fetching high-level insights from Gemini...");
     try {
-      String prompt = _buildInsightPrompt(
-        cropPrices,
-        mandis,
-        languageCode,
-        position,
-      );
+      // Use the custom prompt if provided, otherwise build the market insight prompt
+      String prompt =
+          customPrompt ??
+          _buildInsightPrompt(cropPrices!, mandis!, languageCode, position);
       // For insights, we just need a plain text response
       final response = await _generateContent(prompt, expectJson: false);
 
       if (response != null) {
-        _logger.i("✅ Successfully received market insights.");
+        _logger.i("✅ Successfully received insights.");
         return {'summary': response};
       }
     } catch (e) {
@@ -672,50 +673,104 @@ class _EnhancedMarketDetailsPageState extends State<EnhancedMarketDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Market Details'),
-        backgroundColor: Colors.green[600],
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _loadMarketData,
+    return Container(
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/agriculture_bg.jpg'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Color(0x88000000), // Semi-transparent black overlay
+            BlendMode.darken,
           ),
-        ],
+        ),
       ),
-      body: _buildBody(),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          title: const Text(
+            'Market Details',
+            style: TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              onPressed: _loadMarketData,
+            ),
+          ],
+        ),
+        body: _buildBody(),
+      ),
     );
   }
 
   Widget _buildBody() {
     switch (_loadingState) {
       case LoadingState.loading:
-        return const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Loading market data...'),
-            ],
+        return Center(
+          child: Card(
+            elevation: 8,
+            color: Colors.white.withOpacity(0.9),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text(
+                    'Loading market data...',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
 
       case LoadingState.error:
         return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text(_errorMessage ?? 'Unknown error'),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _loadMarketData,
-                child: const Text('Retry'),
+          child: Card(
+            elevation: 8,
+            color: Colors.white.withOpacity(0.9),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    _errorMessage ?? 'Unknown error',
+                    style: const TextStyle(fontSize: 16),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[600],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: _loadMarketData,
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
 
@@ -743,11 +798,12 @@ class _EnhancedMarketDetailsPageState extends State<EnhancedMarketDetailsPage> {
 
   Widget _buildAIInsightsCard() {
     return Card(
-      elevation: 4,
+      elevation: 8,
       margin: const EdgeInsets.all(12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      color: Colors.white.withOpacity(0.9),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

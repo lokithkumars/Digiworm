@@ -253,17 +253,23 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFa8e063), Color(0xFF56ab2f)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+        image: DecorationImage(
+          image: AssetImage('assets/agriculture_bg.jpg'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Color(0x88000000), // Semi-transparent black overlay
+            BlendMode.darken,
+          ),
         ),
       ),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
-          title: Text(strings['dashboard_title']!),
-          backgroundColor: Colors.green.withOpacity(0.8),
+          title: Text(
+            strings['dashboard_title']!,
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.transparent,
           elevation: 0,
           actions: [
             Padding(
@@ -271,7 +277,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Center(
                 child: Text(
                   '${strings['welcome_back']!}, ${widget.farmerName}',
-                  style: const TextStyle(fontSize: 14),
+                  style: const TextStyle(fontSize: 14, color: Colors.white),
                 ),
               ),
             ),
