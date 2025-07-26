@@ -19,29 +19,24 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.8.1
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: ">=3.0.0"
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
     sdk: flutter
-  flutter_tts: ^3.8.3
-  speech_to_text: ^6.6.0
+  flutter_tts: ^3.7.0
+  speech_to_text: ^6.3.0
   geolocator: ^10.1.0
-  http: ^1.1.0          # Add this for API calls
-  intl: ^0.18.1         # Add this for date formatting
-  firebase_core: ^3.15.2
-  cloud_firestore: ^5.6.12
-  dio: ^5.4.0          # HTTP client for API calls
-  logger: ^2.0.2+1     # Logging utility
-  flutter_dotenv: ^5.1.0  # Environment variables
-  google_generative_ai: ^0.2.0  # Google Gemini AI
-  url_launcher: ^6.0.12
+  http: ^1.1.0
+  intl: ^0.18.1
+  firebase_core: ^2.15.1
+  cloud_firestore: ^4.9.1
+  dio: ^5.3.2
+  logger: ^2.0.1
+  flutter_dotenv: ^5.1.0
+  google_generative_ai: ^0.2.0
+  url_launcher: ^6.1.14
 
 dev_dependencies:
   flutter_test:

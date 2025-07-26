@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:geolocator/geolocator.dart';
-import 'weather.dart';
 import 'market.dart';
 import 'scheme_page.dart';
+import 'weather.dart';
 
 // Add these localized strings for dashboard
 const Map<String, Map<String, String>> dashboardStrings = {
@@ -307,7 +307,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => EnhancedWeatherPage(
+                          builder: (context) => WeatherPage(
                             languageCode: widget.languageCode,
                             currentPosition: _position,
                           ),

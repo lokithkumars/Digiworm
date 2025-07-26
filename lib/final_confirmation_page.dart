@@ -9,14 +9,14 @@ class FinalConfirmationPage extends StatelessWidget {
   final String state;
 
   const FinalConfirmationPage({
-    Key? key,
+    super.key,
     required this.languageCode,
     required this.name,
     required this.phone,
     required this.land,
     required this.crops,
     required this.state,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

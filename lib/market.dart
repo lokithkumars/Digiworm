@@ -433,7 +433,7 @@ class EnhancedGeminiAI {
     Action: From the provided JSON data, filter the records to find entries that match my crops.
     Output Rules:
     1.  Return ONLY a valid JSON array of objects.
-    2.  Do not include any explanatory text, markdown like \`\`\`json, or anything else outside the JSON array.
+    2.  Do not include any explanatory text, markdown like ```json, or anything else outside the JSON array.
     3.  Each object in the array must have these exact keys: "commodity", "modal_price".
 
     JSON Data:
@@ -1078,9 +1078,9 @@ class _EnhancedMarketDetailsPageState extends State<EnhancedMarketDetailsPage> {
               const SizedBox(height: 8),
               const Divider(),
               const SizedBox(height: 8),
-              Text(
+              const Text(
                 'Accepted Crops:',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 4),
               Wrap(

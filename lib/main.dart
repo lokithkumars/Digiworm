@@ -372,7 +372,11 @@ const Map<String, String> ttsLocales = {
   'te': 'te-IN',
 };
 
-void main() async {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await dotenv.load(fileName: '.env');
   WidgetsFlutterBinding.ensureInitialized();
   // Firebase removed: await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -480,12 +484,12 @@ class LanguageSelectionPage extends StatelessWidget {
                           code == 'en'
                               ? 'English'
                               : code == 'hi'
-                              ? 'Hindi'
-                              : code == 'ta'
-                              ? 'Tamil'
-                              : code == 'kn'
-                              ? 'Kannada'
-                              : 'Telugu',
+                                  ? 'Hindi'
+                                  : code == 'ta'
+                                      ? 'Tamil'
+                                      : code == 'kn'
+                                          ? 'Kannada'
+                                          : 'Telugu',
                           style: const TextStyle(fontSize: 18),
                         ),
                       ),
@@ -768,9 +772,8 @@ class _PhoneInputPageState extends State<PhoneInputPage> {
                   TextField(
                     controller: _controller,
                     decoration: InputDecoration(
-                      labelText:
-                          localizedStrings[widget
-                              .languageCode]!['phone_label']!,
+                      labelText: localizedStrings[widget.languageCode]![
+                          'phone_label']!,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -926,9 +929,7 @@ class _LandholdingsInputPageState extends State<LandholdingsInputPage> {
                     value: _selectedAcres,
                     decoration: InputDecoration(
                       labelText:
-                          localizedStrings[widget
-                              .languageCode]!['land_label']! +
-                          ' (acres)',
+                          '${localizedStrings[widget.languageCode]!['land_label']!} (acres)',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -1023,7 +1024,7 @@ class CropsInputPage extends StatefulWidget {
 
 class _CropsInputPageState extends State<CropsInputPage> {
   late FlutterTts _tts;
-  List<String> _selectedCrops = [];
+  final List<String> _selectedCrops = [];
   String? _otherCrop;
   bool _isListening = false;
 
@@ -1138,7 +1139,7 @@ class _CropsInputPageState extends State<CropsInputPage> {
           ),
         ),
         child: Container(
-          decoration: BoxDecoration(color: Colors.transparent),
+          decoration: const BoxDecoration(color: Colors.transparent),
           child: SafeArea(
             child: Column(
               children: [
@@ -1183,11 +1184,11 @@ class _CropsInputPageState extends State<CropsInputPage> {
                       ),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 3.5,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                          ),
+                        crossAxisCount: 2,
+                        childAspectRatio: 3.5,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                      ),
                       itemCount: cropsList.length,
                       itemBuilder: (context, idx) {
                         final crop = cropsList[idx];

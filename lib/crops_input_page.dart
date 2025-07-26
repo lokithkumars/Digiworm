@@ -129,7 +129,7 @@ class _CropsInputPageState extends State<CropsInputPage> {
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/agriculture_bg.jpg'),
+            image: const AssetImage('assets/agriculture_bg.jpg'),
             fit: BoxFit.cover,
             colorFilter: ColorFilter.mode(
               Colors.green.withOpacity(0.18),
