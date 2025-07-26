@@ -162,7 +162,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget _buildDashboardCard({
     required String title,
     required String description,
-    required Color color, // Changed to use color instead of image
+    required String imagePath, // Changed to use image path
     required VoidCallback onTap,
   }) {
     return Card(
@@ -174,7 +174,14 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            color: color, // Set the background color
+            image: DecorationImage(
+              image: AssetImage(imagePath),
+              fit: BoxFit.cover,
+              colorFilter: ColorFilter.mode(
+                Colors.black.withOpacity(0.4),
+                BlendMode.darken,
+              ),
+            ),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -288,7 +295,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   _buildDashboardCard(
                     title: strings['weather']!,
                     description: strings['weather_desc']!,
-                    color: Colors.blue, // Solid color for weather
+                    imagePath: 'assets/images/weather.jpg',
                     onTap: () {
                       Navigator.push(
                         context,
@@ -305,7 +312,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   _buildDashboardCard(
                     title: strings['crop_disease']!,
                     description: strings['disease_desc']!,
-                    color: Colors.red, // Solid color for crop disease
+                    imagePath: 'assets/images/crop_disease.jpg',
                     onTap: () {
                       // Navigate to crop disease page
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -320,7 +327,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   _buildDashboardCard(
                     title: strings['market_details']!,
                     description: strings['market_desc']!,
-                    color: Colors.amber, // Solid color for market details
+                    imagePath: 'assets/images/market.jpg',
                     onTap: () {
                       Navigator.push(
                         context,
@@ -343,7 +350,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   _buildDashboardCard(
                     title: strings['govt_schemes']!,
                     description: strings['schemes_desc']!,
-                    color: Colors.green, // Solid color for government schemes
+                    imagePath: 'assets/images/govt_scheme.png',
                     onTap: () {
                       // Navigate to government schemes page
                       ScaffoldMessenger.of(context).showSnackBar(
