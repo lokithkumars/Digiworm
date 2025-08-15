@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:geolocator/geolocator.dart';
-import 'market.dart';
+import 'yearly_plan_screen.dart';
 import 'scheme_page.dart';
 import 'weather.dart';
 import 'Screens/disease_prediction_screen.dart';
@@ -26,14 +26,14 @@ const Map<String, Map<String, String>> dashboardStrings = {
     'dashboard_title': 'Dashboard',
     'weather': 'Weather',
     'crop_disease': 'Crop Disease',
-    'market_details': 'Market Details',
+    'market_details': 'Yearly Crop Plan',
     'govt_schemes': 'Government Schemes',
     'query_hint': 'Ask your question here...',
     'ask_question': 'Ask Question',
     'welcome_back': 'Welcome Back',
     'weather_desc': 'Today\'s weather and forecast',
     'disease_desc': 'Crop disease identification and solutions',
-    'market_desc': 'Crop prices and market information',
+    'market_desc': 'Smart seasonal crop planning guide',
     'schemes_desc': 'Government schemes for farmers',
   },
   'kn': {
@@ -337,16 +337,8 @@ class _DashboardPageState extends State<DashboardPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => EnhancedMarketDetailsPage(
-                            languageCode: widget.languageCode,
-                            currentPosition: _position,
-                            userCrops: const [
-                              'Rice',
-                              'Wheat',
-                              'Maize',
-                              'Cotton',
-                              'Sugarcane',
-                            ], // Add your default crops here
+                          builder: (context) => const YearlyPlanPage(
+                            userState: "Maharashtra",
                           ),
                         ),
                       );

@@ -5,11 +5,36 @@ import 'package:path/path.dart' as path;
 import 'package:image_picker/image_picker.dart';
 import 'package:http_parser/http_parser.dart';
 
-import '../config.dart';
-
 class ApiService {
-  // Get baseUrl from config
-  static final String baseUrl = AppConfig.diseaseApiUrl;
+  // Base URLs for different services
+  static const String baseUrl =
+      'http://10.0.2.2:5001'; // For disease prediction
+  static const String _planBaseUrl =
+      'http://10.0.2.2:5000'; // For crop planning
+
+  // Method to generate crop plan
+  static Future<Map<String, dynamic>> generatePlan(String location) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_planBaseUrl/generate_demand_plan'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'state': location,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception(
+            'Failed to load plan. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to connect to the server: $e');
+    }
+  }
 
   // Updated method to handle XFile for both web and mobile
   static Future<Map<String, dynamic>?> predictDiseaseFromXFile(
